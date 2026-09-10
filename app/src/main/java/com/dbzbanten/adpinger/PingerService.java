@@ -19,44 +19,58 @@ public class PingerService extends Service {
     public static final String ACTION_SHOW_URL =
             "com.dbzbanten.adpinger.SHOW_URL";
 
-    private static final String CHANNEL = "adpinger";
+    private static final String CHANNEL_ID = "adpinger";
     private static final int NOTIFICATION_ID = 1001;
 
     private File logFile;
-    private volatile boolean stopping = false;
+    private boolean running = false;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        logFile = new File(getFilesDir(), "adpinger.log");
+        logFile = new File(
+                getFilesDir(),
+                "adpinger.log"
+        );
 
         createNotificationChannel();
 
-        // Penting untuk Android modern:
-        // AndroidManifest harus memiliki foregroundServiceType="dataSync"
+        /*
+         * WAJIB untuk Foreground Service.
+         * AndroidManifest.xml harus menggunakan:
+         *
+         * android:foregroundServiceType="dataSync"
+         */
         startForeground(
                 NOTIFICATION_ID,
                 createNotification("Service aktif")
         );
 
-        log("SERVICE CREATED");
+        running = true;
+
+        writeLog("SERVICE CREATED");
     }
 
     private void createNotificationChannel() {
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
             NotificationChannel channel =
                     new NotificationChannel(
-                            CHANNEL,
-                            "AdPinger",
+                            CHANNEL_ID,
+                            "AdPingerMulti",
                             NotificationManager.IMPORTANCE_LOW
                     );
 
-            channel.setDescription("Status service AdPingerMulti");
+            channel.setDescription(
+                    "Status service AdPingerMulti"
+            );
 
             NotificationManager manager =
-                    getSystemService(NotificationManager.class);
+                    getSystemService(
+                            NotificationManager.class
+                    );
 
             if (manager != null) {
                 manager.createNotificationChannel(channel);
@@ -69,7 +83,10 @@ public class PingerService extends Service {
         Notification.Builder builder;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder = new Notification.Builder(this, CHANNEL);
+            builder = new Notification.Builder(
+                    this,
+                    CHANNEL_ID
+            );
         } else {
             builder = new Notification.Builder(this);
         }
@@ -77,18 +94,25 @@ public class PingerService extends Service {
         return builder
                 .setContentTitle("AdPingerMulti")
                 .setContentText(text)
-                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .setSmallIcon(
+                        android.R.drawable.stat_sys_download_done
+                )
                 .setOngoing(true)
-                .setCategory(Notification.CATEGORY_SERVICE)
+                .setCategory(
+                        Notification.CATEGORY_SERVICE
+                )
                 .build();
     }
 
     private void updateNotification(String text) {
 
         NotificationManager manager =
-                getSystemService(NotificationManager.class);
+                getSystemService(
+                        NotificationManager.class
+                );
 
         if (manager != null) {
+
             manager.notify(
                     NOTIFICATION_ID,
                     createNotification(text)
@@ -96,7 +120,7 @@ public class PingerService extends Service {
         }
     }
 
-    private void log(String message) {
+    private void writeLog(String message) {
 
         try {
 
@@ -107,16 +131,22 @@ public class PingerService extends Service {
                 );
             }
 
-            FileWriter writer =
-                    new FileWriter(logFile, true);
-
             String time =
                     new SimpleDateFormat(
                             "yyyy-MM-dd HH:mm:ss",
                             Locale.US
                     ).format(new Date());
 
-            writer.write(time + " " + message + "\n");
+            FileWriter writer =
+                    new FileWriter(
+                            logFile,
+                            true
+                    );
+
+            writer.write(
+                    time + " " + message + "\n"
+            );
+
             writer.close();
 
         } catch (Exception ignored) {
@@ -130,16 +160,24 @@ public class PingerService extends Service {
             int startId
     ) {
 
-        String action =
-                intent != null
-                        ? intent.getAction()
-                        : null;
+        String action = null;
 
+        if (intent != null) {
+            action = intent.getAction();
+        }
+
+        /*
+         * STOP
+         */
         if ("STOP".equals(action)) {
 
-            stopping = true;
+            running = false;
 
-            log("SERVICE STOP");
+            writeLog("SERVICE STOP");
+
+            updateNotification(
+                    "Service dihentikan"
+            );
 
             stopForeground(true);
             stopSelf();
@@ -147,11 +185,16 @@ public class PingerService extends Service {
             return START_NOT_STICKY;
         }
 
-        stopping = false;
+        /*
+         * START
+         */
+        running = true;
 
-        log("SERVICE START");
+        writeLog("SERVICE START");
 
-        updateNotification("Service aktif — siap");
+        updateNotification(
+                "Service aktif — siap"
+        );
 
         return START_STICKY;
     }
@@ -159,9 +202,9 @@ public class PingerService extends Service {
     @Override
     public void onDestroy() {
 
-        stopping = true;
+        running = false;
 
-        log("SERVICE DESTROY");
+        writeLog("SERVICE DESTROY");
 
         try {
             stopForeground(true);
@@ -175,4 +218,4 @@ public class PingerService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
-            }
+}
