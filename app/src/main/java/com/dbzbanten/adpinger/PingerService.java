@@ -1,107 +1,178 @@
 package com.dbzbanten.adpinger;
 
-import android.app.*;
-import android.content.*;
-import android.os.*;
-import java.io.*;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
+import android.content.Intent;
+import android.os.Build;
+import android.os.IBinder;
+
+import java.io.File;
+import java.io.FileWriter;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Date;
+import java.util.Locale;
 
 public class PingerService extends Service {
-    public static final String ACTION_SHOW_URL = "com.dbzbanten.adpinger.SHOW_URL";
-    private Handler handler;
-    private Runnable task;
-    private static final String CHANNEL="adpinger";
+
+    public static final String ACTION_SHOW_URL =
+            "com.dbzbanten.adpinger.SHOW_URL";
+
+    private static final String CHANNEL = "adpinger";
+    private static final int NOTIFICATION_ID = 1001;
+
     private File logFile;
     private volatile boolean stopping = false;
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    @Override public void onCreate() {
+    @Override
+    public void onCreate() {
         super.onCreate();
-        handler = new Handler(Looper.getMainLooper());
-        logFile = new File(getFilesDir(),"adpinger.log");
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel c = new NotificationChannel(CHANNEL,"AdPinger",NotificationManager.IMPORTANCE_LOW);
-            getSystemService(NotificationManager.class).createNotificationChannel(c);
-        }
-        startForeground(1001, notification("Auto random URL siap"));
+
+        logFile = new File(getFilesDir(), "adpinger.log");
+
+        createNotificationChannel();
+
+        // Penting untuk Android modern:
+        // AndroidManifest harus memiliki foregroundServiceType="dataSync"
+        startForeground(
+                NOTIFICATION_ID,
+                createNotification("Service aktif")
+        );
+
+        log("SERVICE CREATED");
     }
 
-    private Notification notification(String text) {
-        Notification.Builder b = Build.VERSION.SDK_INT >= 26
-                ? new Notification.Builder(this,CHANNEL) : new Notification.Builder(this);
-        return b.setContentTitle("AdPingerMulti")
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            NotificationChannel channel =
+                    new NotificationChannel(
+                            CHANNEL,
+                            "AdPinger",
+                            NotificationManager.IMPORTANCE_LOW
+                    );
+
+            channel.setDescription("Status service AdPingerMulti");
+
+            NotificationManager manager =
+                    getSystemService(NotificationManager.class);
+
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private Notification createNotification(String text) {
+
+        Notification.Builder builder;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder = new Notification.Builder(this, CHANNEL);
+        } else {
+            builder = new Notification.Builder(this);
+        }
+
+        return builder
+                .setContentTitle("AdPingerMulti")
                 .setContentText(text)
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                .setOngoing(true).build();
-    }
-
-    private void log(String s) {
-        try (FileWriter w = new FileWriter(logFile,true)) {
-            w.write(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.US).format(new Date())+" "+s+"\n");
-        } catch(Exception ignored) {}
-    }
-
-    @Override public int onStartCommand(Intent in,int flags,int id) {
-        if ("STOP".equals(in != null ? in.getAction() : null)) {
-            stopping = true;
-            if(task!=null) handler.removeCallbacks(task);
-            executor.shutdownNow();
-            stopForeground(true); stopSelf();
-            return START_NOT_STICKY;
-        }
-        stopping = false;
-        if(task==null) schedule();
-        return START_STICKY;
-    }
-
-    private void schedule() {
-        task = new Runnable() {
-            @Override public void run() {
-                if (stopping) return;
-                executor.execute(PingerService.this::selectRandomUrl);
-                int mins=getSharedPreferences("adpinger",0).getInt("interval",5);
-                handler.postDelayed(this, mins * 60_000L);
-            }
-        };
-        // first selection happens immediately after START
-        handler.post(task);
-    }
-
-    private void selectRandomUrl() {
-        try {
-            List<String> urls = RemoteUrlConfig.fetch(RemoteConfigStore.getUrl(this));
-            if (urls.isEmpty()) throw new IOException("Daftar URL kosong");
-            String u = urls.get(new Random().nextInt(urls.size()));
-            log("AUTO RANDOM SELECT: " + u);
-
-            // Kirim URL ke Activity. Jika Activity sedang terbuka, MainActivity
-            // akan langsung memuat halaman tersebut ke WebView. Android
-            // membatasi WebView yang berjalan di background; service tidak
-            // mencoba memaksa Activity tampil di depan.
-            Intent i = new Intent(ACTION_SHOW_URL);
-            i.setPackage(getPackageName());
-            i.putExtra("url", u);
-            sendBroadcast(i);
-
-            updateNotification("URL random terpilih — buka aplikasi untuk melihat");
-        } catch(Exception e) {
-            log("AUTO RANDOM ERROR: " + e.getMessage());
-            updateNotification("Gagal memilih URL: " + e.getMessage());
-        }
+                .setOngoing(true)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .build();
     }
 
     private void updateNotification(String text) {
-        NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        nm.notify(1001, notification(text));
+
+        NotificationManager manager =
+                getSystemService(NotificationManager.class);
+
+        if (manager != null) {
+            manager.notify(
+                    NOTIFICATION_ID,
+                    createNotification(text)
+            );
+        }
     }
 
-    @Override public void onDestroy() {
-        if (handler != null && task != null) handler.removeCallbacks(task);
-        executor.shutdownNow();
+    private void log(String message) {
+
+        try {
+
+            if (logFile == null) {
+                logFile = new File(
+                        getFilesDir(),
+                        "adpinger.log"
+                );
+            }
+
+            FileWriter writer =
+                    new FileWriter(logFile, true);
+
+            String time =
+                    new SimpleDateFormat(
+                            "yyyy-MM-dd HH:mm:ss",
+                            Locale.US
+                    ).format(new Date());
+
+            writer.write(time + " " + message + "\n");
+            writer.close();
+
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    public int onStartCommand(
+            Intent intent,
+            int flags,
+            int startId
+    ) {
+
+        String action =
+                intent != null
+                        ? intent.getAction()
+                        : null;
+
+        if ("STOP".equals(action)) {
+
+            stopping = true;
+
+            log("SERVICE STOP");
+
+            stopForeground(true);
+            stopSelf();
+
+            return START_NOT_STICKY;
+        }
+
+        stopping = false;
+
+        log("SERVICE START");
+
+        updateNotification("Service aktif — siap");
+
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+
+        stopping = true;
+
+        log("SERVICE DESTROY");
+
+        try {
+            stopForeground(true);
+        } catch (Exception ignored) {
+        }
+
         super.onDestroy();
     }
 
-    @Override public IBinder onBind(Intent i){return null;}
-}
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+            }
