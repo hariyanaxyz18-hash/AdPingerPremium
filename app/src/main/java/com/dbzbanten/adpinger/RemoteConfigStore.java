@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 public final class RemoteConfigStore {
     private static final String PREF = "adpinger_config";
     private static final String KEY_URL = "github_raw_url";
+    private static final String DEFAULT_URL = "https://raw.githubusercontent.com/hariyanaxyz18-hash/AdPingerPremium/main/urls.txt";
 
     private RemoteConfigStore() {}
 
@@ -16,6 +17,6 @@ public final class RemoteConfigStore {
 
     public static String getUrl(Context context) {
         return context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-                .getString(KEY_URL, "");
+                .getString(KEY_URL, DEFAULT_URL);
     }
 }

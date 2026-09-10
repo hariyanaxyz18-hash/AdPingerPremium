@@ -39,6 +39,8 @@ public class MainActivity extends Activity {
         interval.setSelection(savedMin == 5 ? 1 : savedMin == 15 ? 2 : savedMin == 30 ? 3 : savedMin == 60 ? 4 : 0);
 
         githubUrl.setText(RemoteConfigStore.getUrl(this));
+        // Default remote URL list is hosted on GitHub; users can still change it.
+        githubUrl.setHint("Raw GitHub URL daftar URL");
         setupWebView();
 
         findViewById(R.id.saveRefresh).setOnClickListener(v -> refreshRemote());
@@ -49,13 +51,38 @@ public class MainActivity extends Activity {
 
         urlReceiver = new BroadcastReceiver() {
             @Override public void onReceive(Context context, Intent intent) {
-                String u = intent.getStringExtra("url");
-                if (u != null && !u.isEmpty()) { currentUrl.setText("AUTO RANDOM: " + u); status.setText("URL dipilih otomatis. Membuka di WebView..."); loadAdUrl(u); }
+                String u = intent.getStringExtra(PingerService.EXTRA_URL);
+                if (u != null && !u.isEmpty()) {
+                    getSharedPreferences("adpinger",0).edit().remove("pending_url").apply();
+                    currentUrl.setText("AUTO RANDOM: " + u);
+                    status.setText("URL dipilih otomatis. Membuka di WebView...");
+                    loadAdUrl(u);
+                }
             }
         };
         registerReceiver(urlReceiver, new IntentFilter(PingerService.ACTION_SHOW_URL),
                 Context.RECEIVER_NOT_EXPORTED);
+        loadPendingUrl(getIntent());
         loadLog();
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        loadPendingUrl(intent);
+    }
+
+    private void loadPendingUrl(Intent intent) {
+        String u = intent == null ? null : intent.getStringExtra(PingerService.EXTRA_URL);
+        if (u == null || u.isEmpty()) {
+            u = getSharedPreferences("adpinger",0).getString("pending_url", "");
+        }
+        if (u != null && !u.isEmpty()) {
+            getSharedPreferences("adpinger",0).edit().remove("pending_url").apply();
+            currentUrl.setText("AUTO RANDOM: " + u);
+            status.setText("URL otomatis. Membuka di WebView...");
+            loadAdUrl(u);
+        }
     }
 
     private void setupWebView() {

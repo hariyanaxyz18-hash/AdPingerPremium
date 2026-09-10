@@ -51,3 +51,9 @@ git push
 ```
 
 A new GitHub Actions build will include the updated list.
+
+
+### Remote URL list
+Default source: `https://raw.githubusercontent.com/hariyanaxyz18-hash/AdPingerPremium/main/urls.txt`
+
+The APK fetches the URL list from this Raw GitHub endpoint when selecting a URL.
