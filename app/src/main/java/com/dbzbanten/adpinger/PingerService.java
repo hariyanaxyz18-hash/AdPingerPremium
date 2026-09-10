@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 public class PingerService extends Service {
     public static final String ACTION_SHOW_URL = "com.dbzbanten.adpinger.SHOW_URL";
+    public static final String ACTION_STOP = "com.dbzbanten.adpinger.STOP";
     public static final String EXTRA_URL = "url";
     private static final String CHANNEL_ID = "adpinger";
     private static final int NOTIFICATION_ID = 1001;
@@ -83,7 +84,16 @@ public class PingerService extends Service {
         if ("STOP".equals(action)) {
             running = false;
             stopScheduler();
-            getSharedPreferences(PREF, MODE_PRIVATE).edit().putBoolean("enabled", false).apply();
+            getSharedPreferences(PREF, MODE_PRIVATE)
+                    .edit()
+                    .putBoolean("enabled", false)
+                    .remove(PENDING_URL)
+                    .apply();
+
+            Intent stopBroadcast = new Intent(ACTION_STOP)
+                    .setPackage(getPackageName());
+            sendBroadcast(stopBroadcast);
+
             writeLog("SERVICE STOP");
             updateNotification("Service dihentikan");
             stopForeground(true);

@@ -51,9 +51,17 @@ public class MainActivity extends Activity {
 
         urlReceiver = new BroadcastReceiver() {
             @Override public void onReceive(Context context, Intent intent) {
+                if (PingerService.ACTION_STOP.equals(intent.getAction())) {
+                    getSharedPreferences("adpinger",0)
+                            .edit().remove("pending_url").apply();
+                    status.setText("Auto WebView STOP");
+                    return;
+                }
+
                 String u = intent.getStringExtra(PingerService.EXTRA_URL);
                 if (u != null && !u.isEmpty()) {
-                    getSharedPreferences("adpinger",0).edit().remove("pending_url").apply();
+                    getSharedPreferences("adpinger",0)
+                            .edit().remove("pending_url").apply();
                     currentUrl.setText("AUTO RANDOM: " + u);
                     status.setText("URL dipilih otomatis. Membuka di WebView...");
                     loadAdUrl(u);
@@ -143,8 +151,12 @@ public class MainActivity extends Activity {
     }
 
     private void stopPinger() {
+        getSharedPreferences("adpinger",0)
+                .edit().remove("pending_url").putBoolean("enabled", false).apply();
+
         Intent i = new Intent(this, PingerService.class).setAction("STOP");
         startService(i);
+
         status.setText("Auto WebView STOP");
     }
 
