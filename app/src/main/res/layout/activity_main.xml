@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+ android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg">
+ <LinearLayout android:orientation="vertical" android:padding="16dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+  <TextView android:text="ANONYMOUS WEB CONTROL" android:textColor="@color/accent" android:textSize="12sp" android:letterSpacing="0.18" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+  <TextView android:text="AdPingerMulti" android:textColor="@color/text" android:textSize="28sp" android:textStyle="bold" android:layout_marginTop="3dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+  <TextView android:id="@+id/deviceMode" android:text="Detecting device mode..." android:textColor="@color/muted" android:textSize="12sp" android:layout_marginTop="5dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+
+  <LinearLayout android:orientation="vertical" android:background="@drawable/panel" android:layout_marginTop="16dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+   <TextView android:text="REMOTE URL SOURCE" android:textColor="@color/muted" android:textSize="11sp" android:letterSpacing="0.12" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+   <EditText android:id="@+id/githubUrl" android:hint="GitHub Raw URL" android:textColor="@color/text" android:textColorHint="@color/muted" android:inputType="textUri" android:background="@drawable/edit_bg" android:layout_marginTop="8dp" android:layout_width="match_parent" android:layout_height="48dp"/>
+   <Button android:id="@+id/saveRefresh" android:text="SAVE &amp; REFRESH" android:textColor="#07100B" android:background="@drawable/button_primary" android:layout_marginTop="8dp" android:layout_width="match_parent" android:layout_height="48dp"/>
+  </LinearLayout>
+
+  <LinearLayout android:orientation="vertical" android:background="@drawable/panel" android:layout_marginTop="12dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+   <TextView android:text="AUTOMATION" android:textColor="@color/muted" android:textSize="11sp" android:letterSpacing="0.12" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+   <Spinner android:id="@+id/interval" android:layout_marginTop="5dp" android:layout_width="match_parent" android:layout_height="48dp"/>
+   <LinearLayout android:orientation="horizontal" android:layout_marginTop="8dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <Button android:id="@+id/start" android:text="START" android:textColor="#07100B" android:background="@drawable/button_primary" android:layout_weight="1" android:layout_width="0dp" android:layout_height="48dp"/>
+    <Space android:layout_width="8dp" android:layout_height="1dp"/>
+    <Button android:id="@+id/stop" android:text="STOP" android:textColor="@color/text" android:background="@drawable/button_dark" android:layout_weight="1" android:layout_width="0dp" android:layout_height="48dp"/>
+   </LinearLayout>
+  </LinearLayout>
+
+  <LinearLayout android:orientation="vertical" android:background="@drawable/panel" android:layout_marginTop="12dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+   <TextView android:text="WEBVIEW" android:textColor="@color/muted" android:textSize="11sp" android:letterSpacing="0.12" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+   <TextView android:id="@+id/currentUrl" android:text="Belum ada URL" android:textColor="@color/text" android:textIsSelectable="true" android:ellipsize="end" android:maxLines="2" android:layout_marginTop="7dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+   <TextView android:id="@+id/status" android:text="Status: siap" android:textColor="@color/accent" android:layout_marginTop="5dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+   <WebView android:id="@+id/webView" android:layout_width="match_parent" android:layout_height="500dp" android:layout_marginTop="10dp"/>
+   <Button android:id="@+id/randomUrl" android:text="RANDOM URL" android:textColor="@color/text" android:background="@drawable/button_dark" android:layout_marginTop="8dp" android:layout_width="match_parent" android:layout_height="48dp"/>
+  </LinearLayout>
+
+  <LinearLayout android:orientation="vertical" android:background="@drawable/panel" android:layout_marginTop="12dp" android:layout_marginBottom="16dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+   <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
+    <TextView android:text="ACTIVITY LOG" android:textColor="@color/muted" android:textSize="11sp" android:letterSpacing="0.12" android:layout_weight="1" android:layout_width="0dp" android:layout_height="wrap_content"/>
+    <Button android:id="@+id/showLog" android:text="REFRESH" android:textColor="@color/text" android:background="@drawable/button_dark" android:layout_width="100dp" android:layout_height="40dp"/>
+   </LinearLayout>
+   <TextView android:id="@+id/logView" android:text="Belum ada log." android:textColor="@color/muted" android:textIsSelectable="true" android:fontFamily="monospace" android:textSize="11sp" android:layout_marginTop="8dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+  </LinearLayout>
+ </LinearLayout>
+</ScrollView>

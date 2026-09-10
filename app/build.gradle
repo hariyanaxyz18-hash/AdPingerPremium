@@ -1,0 +1,25 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.dbzbanten.adpinger'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.dbzbanten.adpinger'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+}
+
+// Keep the single source of URLs at the repository root: urls.txt
+// It is copied into the APK assets automatically during every build.
+android.applicationVariants.all { variant ->
+    def copyUrls = tasks.register("copy${variant.name.capitalize()}Urls", Copy) {
+        from(rootProject.file("urls.txt"))
+        into(file("src/main/assets"))
+        rename { "urls.txt" }
+    }
+    variant.preBuildProvider.get().dependsOn(copyUrls)
+}
